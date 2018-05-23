@@ -1,0 +1,95 @@
+<html>
+  <head>
+    <%= javascript_include_tag('chartl/application') %>
+    <%= stylesheet_link_tag('chartl/application') %>
+  </head>
+
+  <body class="bootstrap">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12 text-center">
+          <h1 class="text-center"><%= @chart.name || "Unnamed Chart" %></h1>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12">
+          <div id="#chartArea"></div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 22px;">
+        <div class="col-xs-12">
+          <label>Chart Code</label>
+          <div class="well">
+            <pre><%= @chart.data_code %></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<%# high_chart('chartArea', @highchart) %>
+
+<script>
+  var columnOptions = {pointPadding: 0};
+  // if (options.stacking) columnOptions.stacking = 'normal';
+
+  var chart = Highcharts.stockChart('#chartArea', {
+    chart: {
+      type: 'column',
+      zoomType: 'x',
+    },
+    rangeSelector: {
+      selected: 1,
+      buttons: [{ type: 'day', count: 1, text: '1D' }, { type: 'all', count: 1, text: 'All' }],
+      labelStyle: { fontSize: '11px' },
+      inputStyle: { fontSize: '11px', padding: '2px' },
+      inputBoxStyle: { fontSize: '11px', padding: '2px' }
+    },
+    time: {
+      timezone: 'Europe/Zurich'
+    },
+    title: { text: '' },
+    xAxis: { type: 'datetime' },
+    yAxis: [{
+      gridLineWidth: 0,
+      minorGridLineWidth: 0,
+      min: 0,
+      title: {
+        text: ''
+      }
+    }, {
+      gridLineWidth: 0,
+      minorGridLineWidth: 0,
+      min: 0, max: 100,
+      opposite: false,
+      title: false
+    }],
+    tooltip: {
+      pointFormat: '{series.name}: <b>{point.y}</b>',
+      shared: true
+    },
+    legend: {
+      enabled: true,
+      align: 'center',
+      // x: -30,
+      verticalAlign: 'top',
+      y: 25,
+      floating: false,
+      backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+      shadow: false
+    },
+    plotOptions: {
+      column: columnOptions
+    },
+    series: [
+      <% @chart.series.to_a.each do |series| %>
+      { type: '<%= series['type'] || 'spline' %>', name: '<%= series['name'] %>', data: <%= series['data'].map { |r| r[0] = Time.parse(r[0]).to_i * 1000; r }.to_json %>  }
+      <% end %>
+    ]
+  });
+
+  Highcharts.setOptions({ global: { timezone: 'Europe/Zurich' }});
+</script>
