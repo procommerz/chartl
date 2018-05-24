@@ -1,6 +1,7 @@
 class Chartl::Chart < ActiveRecord::Base
   before_create :generate_token
   before_save :refresh_data_if_data_code_changed
+  after_create :refresh_data
 
   self.table_name = :chartl_charts
 
@@ -61,8 +62,6 @@ class Chartl::Chart < ActiveRecord::Base
     if result.is_a?(Array) and result[0].is_a?(Array)
       result = [{'data' => result}]
     end
-
-    save if new_record?
 
     if result and check_series(result)
       self.series = result
@@ -125,7 +124,7 @@ class Chartl::Chart < ActiveRecord::Base
   end
 
   def refresh_data_if_data_code_changed
-    if data_code_changed?
+    if data_code_changed? and !new_record?
       refresh_data
     end
 
