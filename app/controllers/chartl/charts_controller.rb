@@ -3,6 +3,8 @@ module Chartl
     # [GET]
     def show
       load_chart
+      
+      response.headers['X-Robots-Tag'] = 'noindex, nofollow'
 
       if request.format == 'csv'
         render text: CSV.generate { |csv| @chart.as_csv.each { |r| csv << r }}
