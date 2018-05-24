@@ -99,8 +99,9 @@
       column: columnOptions
     },
     series: [
+      <% utc_offset = Time.now.utc_offset %>
       <% @chart.series.to_a.each do |series| %>
-        { type: '<%= series['type'] || series[:type] || 'spline' %>', name: '<%= series['name'] || series[:name] %>', data: <%= (series['data'] || series[:data] || []).map { |r| r[0].is_a?(String) ? r[0] = Time.parse(r[0]).to_i * 1000 : nil; r }.to_json %>  },
+        { type: '<%= series['type'] || series[:type] || 'spline' %>', name: '<%= series['name'] || series[:name] %>', data: <%= (series['data'] || series[:data] || []).map { |r| r[0].is_a?(String) ? r[0] = (Time.parse(r[0]).to_i + utc_offset) * 1000 : nil; r }.to_json %>  },
       <% end %>
     ]
   });
