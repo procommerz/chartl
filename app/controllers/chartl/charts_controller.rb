@@ -2,20 +2,36 @@ module Chartl
   class ChartsController < ApplicationController
     # [GET]
     def show
-      if params[:id].to_i.to_s == params[:id].to_s
-        @chart = Chartl::Chart.find(params[:id])
+      load_chart
+
+      if request.format == 'csv'
+        render text: CSV.generate { |csv| @chart.as_csv.each { |r| csv << r }}
       else
-        @chart = Chartl::Chart.find_by!(token: params[:id])
+
       end
     end
 
+    # [GET]
     def refresh
-      # TODO
+      load_chart
+
+      @chart.refresh_data
+
+      render :show
     end
 
     # POST
     def update
       # TODO
+    end
+
+    def load_chart
+      # Loading by ID won't work in production for security reasons
+      if params[:id].to_i.to_s == params[:id].to_s and !Rails.env.production?
+        @chart = Chartl::Chart.find(params[:id])
+      else
+        @chart = Chartl::Chart.find_by!(token: params[:id])
+      end
     end
   end
 end
