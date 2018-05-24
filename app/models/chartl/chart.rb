@@ -62,6 +62,8 @@ class Chartl::Chart < ActiveRecord::Base
       result = [{'data' => result}]
     end
 
+    save if new_record?
+
     if result and check_series(result)
       self.series = result
       self.update_columns(series: result, data_code: data_code)
