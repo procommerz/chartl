@@ -18,10 +18,11 @@ class Chartl::Chart < ActiveRecord::Base
     # [{ yaxis: 0, name: "User Registrations by Hour", type: "spline", data: Spree::User.where("created_at > ?", 4.weeks.ago).group_by_day(:created_at).count.to_a }]
   end
 
-  def self.build_with(code: , name: nil)
+  def self.build_with(code: , name: nil, type: 'chart')
     chart = Chartl::Chart.create { |c|
       c.data_code = code
       c.name = name
+      c.options = { type: type.to_s }
     }
 
     chart.refresh_data
@@ -50,11 +51,20 @@ class Chartl::Chart < ActiveRecord::Base
     @user_class ||= "Spree::User".constantize
   end
 
+  def visual_type
+    ((options && (options['type'] || options[:type])) || :chart).to_s
+  end
+
   def refresh_data
     result = nil
 
     ActiveRecord::Base.transaction do
-      result = eval(self.data_code).to_a
+      if visual_type == 'cohort'
+        result = eval(self.data_code) # Hash format is required for the cohort
+      else
+        result = eval(self.data_code).to_a
+      end
+
       raise ActiveRecord::Rollback, "Invalidate all changes" # to makesure nothing is actually changed by the code
     end
 
@@ -65,10 +75,18 @@ class Chartl::Chart < ActiveRecord::Base
 
     if result and check_series(result)
       self.series = result
-      self.update_columns(series: result, data_code: data_code)
+      self.update_columns(series: result, data_code: data_code, updated_at: Time.now)
       self.reload
     else
       # TODO: Error exception or just db logging?
+    end
+  end
+
+  def primary_data
+    if visual_type == 'cohort'
+      series
+    else
+      series[0]['data'] || series[0][:data]
     end
   end
 
@@ -93,20 +111,24 @@ class Chartl::Chart < ActiveRecord::Base
   end
 
   def inspect
-    "#<Chartl::Chart:#{id} name=#{name} data_code=#{data_code.to_s[0..30].gsub("\n", "; ")}...>"
+    "#<Chartl::Chart:#{id} name=#{name} data_code=#{data_code.to_s[0..30].gsub("\n", "; ")}... url=#{get_link}>"
   end
 
   def as_csv
     csv_data = []
 
-    csv_data << ["Time"] + series.map { |s| s['name'] || s[:name] }
+    if visual_type == 'chart'
+      csv_data << ["Time"] + series.map { |s| s['name'] || s[:name] }
 
-    # Find the longest series
-    longest_series = series.sort_by { |s| (s['data'] || s[:data]).try(:size).to_i }.last
+      # Find the longest series
+      longest_series = series.sort_by { |s| (s['data'] || s[:data]).try(:size).to_i }.last
 
-    (longest_series['data'] || longest_series[:data]).each.with_index { |row, num|
-      csv_data << [row[0]] + series.map { |s| (s['data'] || s[:data])[num][1] }
-    }
+      (longest_series['data'] || longest_series[:data]).each.with_index { |row, num|
+        csv_data << [row[0]] + series.map { |s| (s['data'] || s[:data])[num][1] }
+      }
+    elsif visual_type == 'table'
+      csv_data = series[0]['data'] if series[0]
+    end
 
     csv_data
   end
@@ -114,12 +136,19 @@ class Chartl::Chart < ActiveRecord::Base
   private
 
   def check_series(series)
-    raise "Not an array" if !series.is_a?(Array)
+    if visual_type != 'cohort'
+      raise "Not an array" if !series.is_a?(Array)
 
-    series.each.with_index do |s, num|
-      raise "Member #{num} in series not a hash" if !s.is_a?(Hash)
-      raise "Member 'data' field invalid in series #{num}" if !s['data'].is_a?(Array) and !s[:data].is_a?(Array)
-      # raise "Member 'type' field invalid. Possible values: spline, column, bar" if series[0]['type'].is_a?(String) and
+      series.each.with_index do |s, num|
+        raise "Member #{num} in series not a hash" if !s.is_a?(Hash)
+        raise "Member 'data' field invalid in series #{num}" if !s['data'].is_a?(Array) and !s[:data].is_a?(Array)
+        # raise "Member 'type' field invalid. Possible values: spline, column, bar" if series[0]['type'].is_a?(String) and
+      end
+
+      true
+    else
+      # TODO: Cohort data validation?
+      true
     end
   end
 

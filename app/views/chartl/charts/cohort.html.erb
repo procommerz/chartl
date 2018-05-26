@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <%= javascript_include_tag('chartl/application') %>
+    <%= stylesheet_link_tag('chartl/application') %>
+    <%= stylesheet_link_tag('https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
+  </head>
+
+  <body class="bootstrap">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12 text-center">
+          <h1 class="text-center"><%= @chart.name || "Unnamed Cohort Study" %></h1>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12" style="margin-bottom: 26px;">
+          <%# Borrowed from https://github.com/n8/cohort_me %>
+          <table class="table table-bordered">
+            <thead>
+            <tr>
+              <th>
+
+              </th>
+
+              <% @chart.primary_data.size.times do |i| %>
+                <th>
+                  <%= i %> <%= @period %>
+                </th>
+              <% end %>
+
+            </tr>
+            </thead>
+
+            <% @chart.primary_data.each_with_index do |row, index| %>
+
+              <% start = row[1]['count'][0] %>
+
+              <tr>
+                <td>
+                  <%= row[0] %><br/>
+                  <%= start %> items
+                </td>
+
+                <% (@chart.primary_data.size).times do |i| %>
+                  <% if @chart.primary_data.size - index > (i + 1) %>
+                    <% pc = ((row[1]['count'][i].to_f/start.to_f) * 100.00) %>
+                    <td style="background-color: rgba(192, 210, 255, <%= (20 + pc) / 100.0 %>)">
+                      <%= "#{pc.round(1)}%" %>
+                    </td>
+                  <% else %>
+                    <td>--</td>
+                  <% end %>
+                <% end %>
+              </tr>
+
+            <% end %>
+
+
+          </table>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12 col-sm-6" style="margin-bottom: 26px;">
+          <a href="" class="btn btn-default">Last refreshed at: <%= l(@chart.updated_at) %></a>
+        </div>
+        <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
+          <a href="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" class="btn btn-default" target="_blank">Download CSV</a>
+          <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh Data</a>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12" style="margin-top: 22px; margin-bottom: 26px;">
+          <label>Chart Code</label>
+          <div class="well">
+            <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace" readonly><%= @chart.data_code %></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

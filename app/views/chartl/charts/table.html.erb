@@ -1,0 +1,77 @@
+<html>
+  <head>
+    <%= javascript_include_tag('chartl/application') %>
+    <%= stylesheet_link_tag('chartl/application') %>
+    <%= stylesheet_link_tag('https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
+  </head>
+
+  <body class="bootstrap">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12 text-center">
+          <h1 class="text-center"><%= @chart.name || "Unnamed Data Table" %></h1>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12" style="margin-bottom: 26px;">
+          <%
+            labels = nil # TODO: custom labels support via options
+            result_doc = nil
+
+            builder = Nokogiri::HTML::Builder.new do |doc|
+              doc.div(:class => "table-responsive") {
+                doc.table(:border => "0", :class=> "table table-bordered") {
+                  if labels
+                    doc.tr {
+                      labels.each { |label|
+                        doc.th(label.to_s)
+                      }
+                    }
+                  end
+
+                  if @chart.series and @chart.series.first
+                    @chart.series.first['data'].each.with_index { |row, rnum|
+                      doc.tr {
+                        row.each.with_index { |row, num|
+                          if rnum == 0 and labels == nil
+                            doc.th(row.to_s)
+                          else
+                            doc.td(row.to_s)
+                          end
+                        }
+                      }
+                    }
+                  end
+                }
+              }
+
+              result_doc = doc
+            end
+          %>
+
+          <%= builder.to_html.html_safe %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12 col-sm-6" style="margin-bottom: 26px;">
+          <a href="" class="btn btn-default">Last refreshed at: <%= l(@chart.updated_at) %></a>
+        </div>
+        <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
+          <a href="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" class="btn btn-default" target="_blank">Download CSV</a>
+          <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh Data</a>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-xs-12" style="margin-top: 22px; margin-bottom: 26px;">
+          <label>Chart Code</label>
+          <div class="well">
+            <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace" readonly><%= @chart.data_code %></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

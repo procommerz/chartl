@@ -1,5 +1,5 @@
 module Chartl
-  class ChartsController < ApplicationController
+  class ChartsController < Chartl::ApplicationController
     # [GET]
     def show
       load_chart
@@ -9,7 +9,7 @@ module Chartl
       if request.format == 'csv'
         render text: CSV.generate { |csv| @chart.as_csv.each { |r| csv << r }}
       else
-
+        render_show
       end
     end
 
@@ -19,7 +19,7 @@ module Chartl
 
       @chart.refresh_data
 
-      render :show
+      render_show
     end
 
     # POST
@@ -33,6 +33,16 @@ module Chartl
         @chart = Chartl::Chart.find(params[:id])
       else
         @chart = Chartl::Chart.find_by!(token: params[:id])
+      end
+    end
+
+    def render_show
+      if @chart.visual_type == 'chart'
+        render :chart
+      elsif @chart.visual_type == 'table'
+        render :table
+      elsif @chart.visual_type == 'cohort'
+        render :cohort
       end
     end
   end
