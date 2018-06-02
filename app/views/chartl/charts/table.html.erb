@@ -36,9 +36,21 @@
                       doc.tr {
                         row.each.with_index { |row, num|
                           if rnum == 0 and labels == nil
-                            doc.th(row.to_s)
+                            v = row.to_s
+
+                            if v['<'] and v['>']
+                              doc.th { |d| d << v }
+                            else
+                              doc.th(v)
+                            end
                           else
-                            doc.td(row.to_s)
+                            v = row.to_s
+
+                            if v['<'] and v['>']
+                              doc.td { |d| d << v }
+                            else
+                              doc.td(v)
+                            end
                           end
                         }
                       }
