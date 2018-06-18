@@ -18,6 +18,10 @@ class Chartl::Chart < ActiveRecord::Base
     # [{ yaxis: 0, name: "User Registrations by Hour", type: "spline", data: Spree::User.where("created_at > ?", 4.weeks.ago).group_by_day(:created_at).count.to_a }]
   end
 
+  def self.f(token)
+    Chartl::Chart.find_by_token(token)
+  end
+
   def self.build_with(code: , name: nil, type: 'chart')
     chart = Chartl::Chart.create { |c|
       c.data_code = code
@@ -41,6 +45,10 @@ class Chartl::Chart < ActiveRecord::Base
 
   def print_link
     puts "View your chart at #{get_link}".green
+  end
+
+  def update_code!(code)
+    update!(data_code: code)
   end
 
   def user

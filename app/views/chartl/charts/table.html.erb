@@ -2,8 +2,20 @@
   <head>
     <%= javascript_include_tag('chartl/application') %>
     <%= stylesheet_link_tag('chartl/application') %>
-    <%= stylesheet_link_tag('https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
+    <%= stylesheet_link_tag('//stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
+    <%= stylesheet_link_tag('//cdn.datatables.net/1.10.18/css/jquery.dataTables.min.css') %>
+    <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js') %>
+    <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/dataTables.bootstrap.min.js') %>
     <title><%= @chart.name || "Unnamed Data Table" %></title>
+
+    <style>
+      #data-table_filter input[type=search] {
+        display: block;
+        margin-top: 5px;
+        margin-left: 0;
+        min-width: 240px;
+      }
+    </style>
   </head>
 
   <body class="bootstrap">
@@ -17,33 +29,34 @@
       <div class="row">
         <div class="col-xs-12" style="margin-bottom: 26px;">
           <%
-            labels = nil # TODO: custom labels support via options
+            labels = @chart.series.first['data'].first # TODO: custom labels support via options
             result_doc = nil
 
             builder = Nokogiri::HTML::Builder.new do |doc|
               doc.div(:class => "table-responsive") {
-                doc.table(:border => "0", :class=> "table table-bordered") {
+                doc.table(:border => "0", :class=> "table table-bordered", :id => "data-table") {
                   if labels
-                    doc.tr {
-                      labels.each { |label|
-                        doc.th(label.to_s)
+                    doc.thead {
+                      doc.tr {
+                        labels.each { |label|
+                          v = label.to_s
+
+                          if v['<'] and v['>']
+                            doc.th { |d| d << v }
+                          else
+                            doc.th(v)
+                          end
+                        }
                       }
                     }
                   end
 
                   if @chart.series and @chart.series.first
-                    @chart.series.first['data'].each.with_index { |row, rnum|
-                      doc.tr {
-                        row.each.with_index { |row, num|
-                          if rnum == 0 and labels == nil
-                            v = row.to_s
-
-                            if v['<'] and v['>']
-                              doc.th { |d| d << v }
-                            else
-                              doc.th(v)
-                            end
-                          else
+                    doc.tbody {
+                      @chart.series.first['data'].each.with_index { |row, rnum|
+                        next if rnum == 0 # Skip 'labels'/'headers' first row
+                        doc.tr {
+                          row.each.with_index { |row, num|
                             v = row.to_s
 
                             if v['<'] and v['>']
@@ -51,7 +64,7 @@
                             else
                               doc.td(v)
                             end
-                          end
+                          }
                         }
                       }
                     }
@@ -86,5 +99,12 @@
         </div>
       </div>
     </div>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $('#data-table').DataTable({
+          paging: false
+        });
+      });
+    </script>
   </body>
 </html>
