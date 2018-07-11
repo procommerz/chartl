@@ -18,6 +18,9 @@
     </style>
   </head>
 
+  <%
+    options = @chart.options ? @chart.options.stringify_keys : {}
+  %>
   <body class="bootstrap">
     <div class="container-fluid">
       <div class="row">
@@ -53,7 +56,12 @@
 
                   if @chart.series and @chart.series.first
                     doc.tbody {
-                      @chart.series.first['data'].each.with_index { |row, rnum|
+                      chart_data = @chart.series.first['data']
+                      if options['show_first']
+                        chart_data = chart_data[0..options['show_first'].to_i]
+                      end
+
+                      chart_data.each.with_index { |row, rnum|
                         next if rnum == 0 # Skip 'labels'/'headers' first row
                         doc.tr {
                           row.each.with_index { |row, num|
@@ -100,11 +108,21 @@
       </div>
     </div>
     <script type="text/javascript">
-      $(document).ready(function() {
-        $('#data-table').DataTable({
-          paging: false
+      <%
+        if options['disable_data_table']
+          disable_data_table = true
+        else
+          disable_data_table = false
+        end
+      %>
+
+      <% if !disable_data_table %>
+        $(document).ready(function() {
+          $('#data-table').DataTable({
+            paging: false
+          });
         });
-      });
+      <% end %>
     </script>
   </body>
 </html>
