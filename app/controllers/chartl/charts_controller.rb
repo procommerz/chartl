@@ -7,7 +7,8 @@ module Chartl
       response.headers['X-Robots-Tag'] = 'noindex, nofollow'
 
       if request.format == 'csv'
-        render text: CSV.generate { |csv| @chart.as_csv.each { |r| csv << r }}
+        separator = params[:csv_separator] || ","
+        render text: CSV.generate(col_sep: separator) { |csv| @chart.as_csv.each { |r| csv << r }}
       else
         render_show
       end
