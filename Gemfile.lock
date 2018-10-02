@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    chartl (0.1.9)
+    chartl (0.1.10)
 
 GEM
   remote: https://rubygems.org/
@@ -111,4 +111,4 @@ DEPENDENCIES
   rake (~> 10.0)
 
 BUNDLED WITH
-   1.14.6
+   1.16.2
