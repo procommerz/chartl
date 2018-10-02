@@ -128,8 +128,6 @@ class Chartl::Chart < ActiveRecord::Base
     if visual_type == 'chart'
       csv_data << ["Time"] + series.map { |s| s['name'] || s[:name] }
 
-
-
       hashes_of_data = series.map {|s| s['data'].to_h}
       csv_hash = {}
 
@@ -146,9 +144,10 @@ class Chartl::Chart < ActiveRecord::Base
           csv_hash[k].append(h[k] || 0)
         }
       }
-      csv_hash.stringify_keys!
-      csv_data << csv_hash.to_a.flatten().each_slice(3).to_a
-      byebug
+
+      csv_data << csv_hash.sort.to_a
+      csv_data = csv_data.flatten().each_slice(series.size+1).to_a
+
     elsif visual_type == 'table'
       csv_data = series[0]['data'] if series[0]
     end
