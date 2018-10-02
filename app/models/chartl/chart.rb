@@ -128,12 +128,26 @@ class Chartl::Chart < ActiveRecord::Base
     if visual_type == 'chart'
       csv_data << ["Time"] + series.map { |s| s['name'] || s[:name] }
 
-      # Find the longest series
-      longest_series = series.sort_by { |s| (s['data'] || s[:data]).try(:size).to_i }.last
+      hashes_of_data = series.map {|s| s['data'].to_h}
+      csv_hash = {}
 
-      (longest_series['data'] || longest_series[:data]).each.with_index { |row, num|
-        csv_data << [row[0]] + series.map { |s| (s['data'] || s[:data])[num][1] }
+      # Generate hash with all "Timestaps" keys from  all hashes
+      hashes_of_data.each{ |h|
+        h.each_key { |k|
+          csv_hash[k] = []
+        }
       }
+
+      # assign value from each "Timestaps" if present, othervise 0 (treat for missing data)
+      csv_hash.each_key { |k|
+        hashes_of_data.each{ |h|
+          csv_hash[k].append(h[k] || 0)
+        }
+      }
+
+      csv_data << csv_hash.sort.to_a
+      csv_data = csv_data.flatten().each_slice(series.size+1).to_a
+
     elsif visual_type == 'table'
       csv_data = series[0]['data'] if series[0]
     end
