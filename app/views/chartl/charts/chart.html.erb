@@ -55,6 +55,7 @@
     chart: {
       type: 'column',
       zoomType: 'x',
+      height: <%= !params[:height].blank? ? "'#{params[:height]}'".html_safe : "'auto'".html_safe %>
     },
     rangeSelector: {
       selected: 1,
