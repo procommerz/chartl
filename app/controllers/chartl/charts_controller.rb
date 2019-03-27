@@ -51,15 +51,15 @@ module Chartl
 
     def chartl_arguments
       header_chart = @chart.series.first['data'].first
-      ary_params = params.permit(header_chart.map(&:to_sym)).to_h
-      @chartl_arguments = ((header_chart & ary_params.keys).map {|k| [k, ary_params[k]]}.to_h).map {|j, v| j == 'completed_at' ? [j, JSON.parse(v)] : [j, v]}.to_h || {}
+      ary_params = params.permit(header_chart.map {|j, v| j.match(/.+_at$|.+At$/i) || j.match(/.+_time$|.+time$/i) ? {j.to_sym => []} : j.to_sym}).to_h
+      @chartl_arguments = ary_params.empty? ? @chart.url_params || {} : ((header_chart & ary_params.keys).map {|k| [k, ary_params[k]]}.to_h).to_h
     end
 
     def filter
       data = @chart.series.first['data']
       headers = data.first
       string_selector = ''
-      if @chartl_arguments
+      if !@chartl_arguments.empty?
         @chartl_arguments.each do |k, v|
           string_selector += " && " if @chartl_arguments.keys.first != k
           if v.is_a?(Array)
@@ -68,22 +68,9 @@ module Chartl
             string_selector += "k[#{headers.find_index(k)}].to_s == '#{v}'"
           end
         end
-
-        @chart.series.first['data'] = data.select.with_index do |k, index|
-          index == 0 ? true : eval(string_selector)
-        end
+        @chart.update_column(:url_params, @chartl_arguments)
+        @chart.series.first['data'] = data.select.with_index { |k, index| index == 0 ? true : eval(string_selector) }
       end
     end
   end
 end
-
-# TODO
-# Nueva columna para guardar la busqueda (jsonb)
-#
-# Show:
-# * Comprobamos se pasan nuevos parametros:
-#    - Si: Guardamos los nuevos parametros y se recalculan los datos
-#    - No: Nada
-# * Se muestra la grafica los datos guardados
-#
-# ?range_from=2019.01.01&range_to=2019.02.01&id=50799
