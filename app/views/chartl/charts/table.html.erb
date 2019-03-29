@@ -163,7 +163,7 @@
 
   function addFilter(selectFilter, value='') {
     if (selectFilter) {
-      if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim)) {
+      if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi)) {
         var new_filter = `<label class="filter-label-${selectFilter}" style="position: relative; margin-right: 40px;">
                             ${selectFilter}<br>
                             Range From <input type="date" class="form-control" name="${selectFilter}[]"  style="display:inline-block; width: auto;" value="${value[0]}">

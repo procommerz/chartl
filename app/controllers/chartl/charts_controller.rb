@@ -51,7 +51,7 @@ module Chartl
 
     def chartl_arguments
       header_chart = @chart.series.first['data'].first
-      ary_params = params.permit(header_chart.map {|j, v| j.match(/.+_at$|.+At$/i) || j.match(/.+_time$|.+time$/i) ? {j.to_sym => []} : j.to_sym}).to_h
+      ary_params = params.permit(header_chart.map {|j, v| j.match(/.+_at$|.+At$/i) || j.match(/.+_time$|.+time$/i) || j.match(/date/i) ? {j.to_sym => []} : j.to_sym}).to_h
       @chartl_arguments = ary_params.empty? ? @chart.url_params || {} : ((header_chart & ary_params.keys).map {|k| [k, ary_params[k]]}.to_h).to_h
     end
 
