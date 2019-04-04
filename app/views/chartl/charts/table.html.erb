@@ -215,6 +215,7 @@
   }
 
   function addFilter(selectFilter, value = '') {
+    selectFilter = selectFilter.replace(' ', '-').toLowerCase();
     if (selectFilter) {
       if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi)) {
         var new_filter = `<label class="label-filter range-filter filter-label-${selectFilter}">
