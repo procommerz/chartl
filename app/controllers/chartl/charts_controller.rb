@@ -52,7 +52,17 @@ module Chartl
     def chartl_arguments
       header_chart = @chart.series.first['data'].first
       ary_params = params.permit(header_chart.map {|j, v| j.match(/.+_at$|.+At$/i) || j.match(/.+_time$|.+time$/i) || j.match(/date/i) ? {j.to_sym => []} : j.to_sym}).to_h
-      @chartl_arguments = ary_params.empty? ? @chart.url_params || {} : ((header_chart & ary_params.keys).map {|k| [k, ary_params[k]]}.to_h).to_h
+      if params[:form_filtered] && ary_params.empty?
+        @chart.update_column(:url_params, {})
+      end
+      @chartl_arguments = if ary_params.empty?
+                            @chart.url_params || {}
+                          else
+                            (header_chart & ary_params.keys).map do |k|
+                              next if ary_params[k].is_a?(Array) && ary_params[k].any?(&:empty?)
+                              [k, ary_params[k]]
+                            end.compact.to_h
+                          end
     end
 
     def filter
@@ -69,7 +79,7 @@ module Chartl
           end
         end
         @chart.update_column(:url_params, @chartl_arguments)
-        @chart.series.first['data'] = data.select.with_index { |k, index| index == 0 ? true : eval(string_selector) }
+        @chart.series.first['data'] = data.select.with_index {|k, index| index == 0 ? true : eval(string_selector)}
       end
     end
   end
