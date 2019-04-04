@@ -215,31 +215,32 @@
   }
 
   function addFilter(selectFilter, value = '') {
+    var originalFilter = selectFilter;
     selectFilter = selectFilter.replace(' ', '-').toLowerCase();
     if (selectFilter) {
       if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi)) {
         var new_filter = `<label class="label-filter range-filter filter-label-${selectFilter}">
-                            ${selectFilter}<br>
+                            ${originalFilter}<br>
                             From <input type="date" class="form-control range-from" name="${selectFilter}[]" value="${value[0]}"><br>
                             To <input type="date" class="form-control range-to" name="${selectFilter}[]" value="${value[1]}">
-                            <button onclick="removeCustomFilter('${selectFilter}')" class="btn btn-outline-primary" type="button">X</button>
+                            <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary" type="button">X</button>
                           </label>`;
-        $(`#label_filters option[value="${selectFilter}"]`).remove();
+        $(`#label_filters option[value="${originalFilter}"]`).remove();
         $('.custom_filters').append(new_filter);
       } else {
         var new_filter = `<label class="label-filter normal-filter filter-label-${selectFilter}" style="position: relative; margin-right: 40px;">
-                           ${selectFilter} <input type="text" class="form-control single-input" name="${selectFilter}" value="${value}">
-                           <button onclick="removeCustomFilter('${selectFilter}')" class="btn btn-outline-primary remove-button" type="button">X</button>
+                           ${originalFilter} <input type="text" class="form-control single-input" name="${selectFilter}" value="${value}">
+                           <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary remove-button" type="button">X</button>
                         </label>`;
-        $(`#label_filters option[value="${selectFilter}"]`).remove();
+        $(`#label_filters option[value="${originalFilter}"]`).remove();
         $('.custom_filters').append(new_filter);
       }
     }
   }
 
-  function removeCustomFilter(val) {
+  function removeCustomFilter(val, original) {
     $(`.filter-label-${val}`).remove();
-    $('#label_filters').append(`<option value="${val}">${val}</option>`);
+    $('#label_filters').append(`<option value="${original}">${original}</option>`);
   }
 
   initFilters();
