@@ -81,7 +81,7 @@
           <div class="col-xs-12 filters">
             <div class="row custom_filters" style="padding: 10px"></div>
             <div class="row" style="padding: 10px">
-              <%= select_tag(:label_filters, options_for_select(@chart.series.first['data'].first), class: 'form-control col-xs-8', style: 'width: auto; display: inline-block;') %>
+              <%= select_tag(:label_filters, options_for_select(@chart.series.first['data'].first.reject{|k| k =~ /id/i}), class: 'form-control col-xs-8', style: 'width: auto; display: inline-block;') %>
               <button type="button" onclick="addCustomFilter()" class="btn btn-primary add-filter">Add Filter</button>
             </div>
           </div>
