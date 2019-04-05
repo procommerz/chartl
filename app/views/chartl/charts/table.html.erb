@@ -218,11 +218,12 @@
     var originalFilter = selectFilter;
     selectFilter = selectFilter.replace(' ', '-').toLowerCase();
     if (selectFilter) {
-      if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi)) {
+      if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi) || selectFilter.match(/when/gi)) {
+
         var new_filter = `<label class="label-filter range-filter filter-label-${selectFilter}">
                             ${originalFilter}<br>
-                            From <input type="date" class="form-control range-from" name="${originalFilter}[]" value="${value[0]}"><br>
-                            To <input type="date" class="form-control range-to" name="${originalFilter}[]" value="${value[1]}">
+                            From <input type="text" class="form-control range-from" placeholder="YYYY-MM-DD"  name="${originalFilter}[]" value="${value[0] || ''}"><br>
+                            To <input type="text" class="form-control range-to" placeholder="YYYY-MM-DD" name="${originalFilter}[]" value="${value[1] || ''}">
                             <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary" type="button">X</button>
                           </label>`;
         $(`#label_filters option[value="${originalFilter}"]`).remove();
