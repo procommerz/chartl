@@ -1,141 +1,250 @@
 <html>
-  <head>
-    <%= javascript_include_tag('chartl/application') %>
-    <%= stylesheet_link_tag('chartl/application') %>
-    <%= stylesheet_link_tag('//stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
-    <%= stylesheet_link_tag('//cdn.datatables.net/1.10.18/css/jquery.dataTables.min.css') %>
-    <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js') %>
-    <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/dataTables.bootstrap.min.js') %>
+<head>
+  <%= javascript_include_tag('chartl/application') %>
+  <%= stylesheet_link_tag('chartl/application') %>
+  <%= stylesheet_link_tag('//stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
+  <%= stylesheet_link_tag('//cdn.datatables.net/1.10.18/css/jquery.dataTables.min.css') %>
+  <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js') %>
+  <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/dataTables.bootstrap.min.js') %>
 
-    <title><%= @chart.name || "Unnamed Data Table" %></title>
+  <title><%= @chart.name || "Unnamed Data Table" %></title>
 
-    <style>
-      #data-table_filter input[type=search] {
-        display: block;
-        margin-top: 5px;
-        margin-left: 0;
-        min-width: 240px;
-      }
-    </style>
-  </head>
+  <style>
+    #data-table_filter input[type=search] {
+      display: block;
+      margin-top: 5px;
+      margin-left: 0;
+      min-width: 240px;
+    }
 
-  <%
-    options = @chart.options ? @chart.options.stringify_keys : {}
-  %>
-  <body class="bootstrap">
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-12 text-center">
-          <h1 class="text-center"><%= @chart.name || "Unnamed Data Table" %></h1>
-        </div>
-      </div>
+    .filter_form {
+      margin-bottom: 26px;
+    }
 
-      <div class="row">
-        <div class="col-xs-12" style="margin-bottom: 26px;">
-          <%
-            labels = @chart.series.first['data'].first # TODO: custom labels support via options
-            result_doc = nil
+    .filter_form .submit {
+    }
 
-            builder = Nokogiri::HTML::Builder.new do |doc|
-              doc.div(:class => "table-responsive") {
-                doc.table(:border => "0", :class=> "table table-bordered", :id => "data-table") {
-                  if labels
-                    doc.thead {
-                      doc.tr {
-                        labels.each { |label|
-                          v = label.to_s
+    .filter_form .add-filter {
+      margin-left: 10px;
+    }
 
-                          if v['<'] and v['>']
-                            doc.th { |d| d << v }
-                          else
-                            doc.th(v)
-                          end
-                        }
-                      }
-                    }
-                  end
+    .filter_form .single-input {
+      padding-right: 40px;
+    }
 
-                  if @chart.series and @chart.series.first
-                    doc.tbody {
-                      chart_data = @chart.series.first['data']
-                      if options['show_first']
-                        chart_data = chart_data[0..options['show_first'].to_i]
-                      end
+    .filter_form .normal-filter .remove-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
 
-                      chart_data.each.with_index { |row, rnum|
-                        next if rnum == 0 # Skip 'labels'/'headers' first row
-                        doc.tr {
-                          row.each.with_index { |row, num|
-                            v = row.to_s
+    .filter_form .range-filter .remove-button {
+      position: absolute;
+      top: 0;
+      right: -35px;
+    }
 
-                            if v['<'] and v['>']
-                              doc.td { |d| d << v }
-                            else
-                              doc.td(v)
-                            end
-                          }
-                        }
-                      }
-                    }
-                  end
-                }
-              }
+    .filter_form .label-filter {
+      position: relative;
+      margin-right: 40px;
+    }
 
-              result_doc = doc
-            end
-          %>
+    .filter_form .label-filter .form-control {
+      display: inline-block;
+      width: auto;
+    }
 
-          <%= builder.to_html.html_safe %>
-        </div>
-      </div>
+    .filter_form .label-filter .range-to {
+      margin-left: 25px;
+    }
 
-      <div class="row">
-        <div class="col-xs-12 col-sm-6" style="margin-bottom: 26px;">
-          <a href="" class="btn btn-default">Last refreshed at: <%= l(@chart.updated_at) %></a>
-        </div>
+    .filter_form .label-filter .range-from {
+      margin-left: 6px;
+    }
 
-        <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
-          <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh Data</a>
-        </div>
+  </style>
+</head>
 
-        <div class="col-xs-12 col-sm-3 pull-right" style="margin-bottom: 26px;">
-          <form action="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" method="get" class="form-inline pull-right">
-            <select class="form-control " name="csv_separator" id="scv_separator">
-              <option id="semicolon" value=";">;</option>
-              <option id="comma" value=",">,</option>
-            </select>
-
-            <button type="submit" class="btn btn-default">Download CSV</button>
-          </form>
-        </div>
-
-      </div>
-
-      <div class="row">
-        <div class="col-xs-12" style="margin-top: 22px; margin-bottom: 26px;">
-          <label>Chart Code</label>
-          <div class="well">
-            <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace" readonly><%= @chart.data_code %></textarea>
+<%
+  options = @chart.options ? @chart.options.stringify_keys : {}
+%>
+<body class="bootstrap">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12 text-center">
+      <h1 class="text-center"><%= @chart.name || "Unnamed Data Table" %></h1>
+    </div>
+    <div class="col-xs-12">
+      <%= form_tag "/chartl/charts/#{@chart.token}", method: 'GET', class: 'filter_form' do %>
+        <input type="hidden" name="form_filtered" value="true">
+        <div class="row" style="padding: 10px">
+          <div class="col-xs-12 filters">
+            <div class="row custom_filters" style="padding: 10px"></div>
+            <div class="row" style="padding: 10px">
+              <%= select_tag(:label_filters, options_for_select(@chart.series.first['data'].first.reject{|k| k == 'id'}), class: 'form-control col-xs-8', style: 'width: auto; display: inline-block;') %>
+              <button type="button" onclick="addCustomFilter()" class="btn btn-primary add-filter">Add Filter</button>
+            </div>
           </div>
         </div>
-      </div>
+        <div class="row">
+          <div class="col-xs-12">
+            <button type="submit" class="btn btn-primary submit">Search</button>
+          </div>
+        </div>
+      <% end %>
     </div>
-    <script type="text/javascript">
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12" style="margin-bottom: 26px;">
       <%
-        if options['disable_data_table']
-          disable_data_table = true
-        else
-          disable_data_table = false
+        labels = @chart.series.first['data'].first # TODO: custom labels support via options
+        result_doc = nil
+
+        builder = Nokogiri::HTML::Builder.new do |doc|
+          doc.div(:class => "table-responsive") {
+            doc.table(:border => "0", :class=> "table table-bordered", :id => "data-table") {
+              if labels
+                doc.thead {
+                  doc.tr {
+                    labels.each { |label|
+                      v = label.to_s
+
+                      if v['<'] and v['>']
+                        doc.th { |d| d << v }
+                      else
+                        doc.th(v)
+                      end
+                    }
+                  }
+                }
+              end
+
+              if @chart.series and @chart.series.first
+                doc.tbody {
+                  chart_data = @chart.series.first['data']
+                  if options['show_first']
+                    chart_data = chart_data[0..options['show_first'].to_i]
+                  end
+
+                  chart_data.each.with_index { |row, rnum|
+                    next if rnum == 0 # Skip 'labels'/'headers' first row
+                    doc.tr {
+                      row.each.with_index { |row, num|
+                        v = row.to_s
+
+                        if v['<'] and v['>']
+                          doc.td { |d| d << v }
+                        else
+                          doc.td(v)
+                        end
+                      }
+                    }
+                  }
+                }
+              end
+            }
+          }
+
+          result_doc = doc
         end
       %>
 
-      <% if !disable_data_table %>
-        $(document).ready(function() {
-          $('#data-table').DataTable({
-            paging: false
-          });
-        });
-      <% end %>
-    </script>
-  </body>
+      <%= builder.to_html.html_safe %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12 col-sm-6" style="margin-bottom: 26px;">
+      <a href="" class="btn btn-default">Last refreshed at: <%= l(@chart.updated_at) %></a>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
+      <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh
+        Data</a>
+    </div>
+
+    <div class="col-xs-12 col-sm-3 pull-right" style="margin-bottom: 26px;">
+      <form action="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" method="get" class="form-inline pull-right">
+        <select class="form-control " name="csv_separator" id="scv_separator">
+          <option id="semicolon" value=";">;</option>
+          <option id="comma" value=",">,</option>
+        </select>
+
+        <button type="submit" class="btn btn-default">Download CSV</button>
+      </form>
+    </div>
+
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12" style="margin-top: 22px; margin-bottom: 26px;">
+      <label>Chart Code</label>
+      <div class="well">
+        <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace" readonly><%= @chart.data_code %></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+  <%
+    if options['disable_data_table']
+      disable_data_table = true
+    else
+      disable_data_table = false
+    end
+  %>
+
+  <% if !disable_data_table %>
+  $(document).ready(function () {
+    $('#data-table').DataTable({
+      paging: false
+    });
+  });
+  <% end %>
+
+  function initFilters() {
+    var url_params = JSON.parse('<%= @chart.url_params.to_json %>'.replace(/&quot;/g, '"'));
+    for (const k in url_params) {
+      addFilter(k, url_params[k]);
+    }
+  }
+
+  function addCustomFilter() {
+    addFilter($('#label_filters').val());
+  }
+
+  function addFilter(selectFilter, value = '') {
+    var originalFilter = selectFilter;
+    selectFilter = selectFilter.replace(' ', '-').toLowerCase();
+    if (selectFilter) {
+      if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi) || selectFilter.match(/when/gi)) {
+
+        var new_filter = `<label class="label-filter range-filter filter-label-${selectFilter}">
+                            ${originalFilter}<br>
+                            From <input type="text" class="form-control range-from" placeholder="YYYY-MM-DD"  name="${originalFilter}[]" value="${value[0] || ''}"><br>
+                            To <input type="text" class="form-control range-to" placeholder="YYYY-MM-DD" name="${originalFilter}[]" value="${value[1] || ''}">
+                            <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary" type="button">X</button>
+                          </label>`;
+        $(`#label_filters option[value="${originalFilter}"]`).remove();
+        $('.custom_filters').append(new_filter);
+      } else {
+        var new_filter = `<label class="label-filter normal-filter filter-label-${selectFilter}" style="position: relative; margin-right: 40px;">
+                           ${originalFilter} <input type="text" class="form-control single-input" name="${originalFilter}" value="${value}">
+                           <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary remove-button" type="button">X</button>
+                        </label>`;
+        $(`#label_filters option[value="${originalFilter}"]`).remove();
+        $('.custom_filters').append(new_filter);
+      }
+    }
+  }
+
+  function removeCustomFilter(val, original) {
+    $(`.filter-label-${val}`).remove();
+    $('#label_filters').append(`<option value="${original}">${original}</option>`);
+  }
+
+  initFilters();
+</script>
+</body>
 </html>
