@@ -112,7 +112,11 @@ class Chartl::Chart < ActiveRecord::Base
   end
 
   def default_arguments
-    options["default_arguments"] || options[:default_arguments]
+    if options
+      options["default_arguments"] || options[:default_arguments] || {}
+    else
+      {}
+    end
   end
 
   def has_default_arguments?
