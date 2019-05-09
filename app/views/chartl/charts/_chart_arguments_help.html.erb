@@ -1,0 +1,13 @@
+<div class="panel panel-default">
+  <div class="panel-heading"><h4 style="color: #999999">Help & Tips</h4></div>
+  <div class="panel-body" style="color: #999999">
+    <p>The Chartl engine supports several parameters that can be controlled via url params of the chartl page.</p>
+
+    <ul>
+      <li><b>arg1, arg2 and arg3</b>: these can be a string or a number (depending, the value may be decoded to a string in the code, beware!) that are passed to the code of the chartl as local variables.</li>
+      <li><b>args</b>: cannot be set via url params, but otherwise will include a sorted array of values of arg1, arg2, arg3 (those that are non-null). If you use this argument in your chartl code, don't forget to provide it's default value!</li>
+      <li><b>range_to</b>: can be set via url, will be casted to a Time object, if provided</li>
+      <li><b>range_from</b>: can be set via url, will be casted to a Time object, if provided</li>
+    </ul>
+  </div>
+</div>

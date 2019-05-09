@@ -1,0 +1,26 @@
+<% if @chart.has_default_arguments? || @chart.has_user_arguments? %>
+  <div>
+    <form method="GET" action="">
+      <div class="panel panel-default">
+        <div class="panel-heading"><h4>Chartl Parameters</h4></div>
+        <div class="panel-body">
+          <div class="row">
+          <% @chart.arguments.reject { |k, v| k == 'args' || v == nil }.to_h.keys.each do |arg_key| %>
+            <% next if !@chart.has_user_argument?(arg_key) %>
+            <div class="col-sm-2">
+              <div class="input-group">
+                <span class="input-group-addon"><%= arg_key %></span>
+                <input id="arg_<%= arg_key %>" class="form-control" type="text" name="<%= arg_key %>" value="<%= @chart.arguments[arg_key] %>" />
+              </div>
+            </div>
+          <% end %>
+          <div class="col-sm-2">
+            <button class="btn btn-success" type="submit">Submit</button>
+          </div>
+
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+<% end %>

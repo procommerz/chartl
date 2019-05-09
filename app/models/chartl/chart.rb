@@ -22,11 +22,11 @@ class Chartl::Chart < ActiveRecord::Base
     Chartl::Chart.find_by_token(token)
   end
 
-  def self.build_with(code: , name: nil, type: 'chart')
+  def self.build_with(code: , name: nil, type: 'chart', default_arguments: {})
     chart = Chartl::Chart.create { |c|
       c.data_code = code
       c.name = name
-      c.options = { type: type.to_s }
+      c.options = { type: type.to_s, default_arguments: default_arguments }
     }
 
     chart.refresh_data
@@ -63,14 +63,20 @@ class Chartl::Chart < ActiveRecord::Base
     ((options && (options['type'] || options[:type])) || :chart).to_s
   end
 
-  def refresh_data
+  def refresh_data(save_series: true)
     result = nil
+
+    eval_binding = binding
+
+    arguments.each do |key, value|
+      eval_binding.local_variable_set(key.to_sym, value)
+    end
 
     ActiveRecord::Base.transaction do
       if visual_type == 'cohort'
-        result = eval(self.data_code) # Hash format is required for the cohort
+        result = eval(self.data_code, eval_binding) # Hash format is required for the cohort
       else
-        result = eval(self.data_code).to_a
+        result = eval(self.data_code, eval_binding).to_a
       end
 
       raise ActiveRecord::Rollback, "Invalidate all changes" # to makesure nothing is actually changed by the code
@@ -81,13 +87,44 @@ class Chartl::Chart < ActiveRecord::Base
       result = [{'data' => result}]
     end
 
-    if result and check_series(result)
+    if result && check_series(result)
       self.series = result
-      self.update_columns(series: result, data_code: data_code, updated_at: Time.now)
-      self.reload
+
+      if save_series
+        self.update_columns(series: result, data_code: data_code, updated_at: Time.now)
+        self.reload
+      end
     else
       # TODO: Error exception or just db logging?
     end
+  end
+
+  def arguments=(args)
+    @arguments = args
+  end
+
+  def arguments
+    if default_arguments
+      default_arguments.merge(@arguments || {})
+    else
+      @arguments || { "arg1" => nil, "arg2" => nil, "arg3" => nil, "args" => [], "range_from" => nil, "range_to" => nil }
+    end
+  end
+
+  def default_arguments
+    options["default_arguments"] || options[:default_arguments]
+  end
+
+  def has_default_arguments?
+    default_arguments.keys.any?
+  end
+
+  def has_user_arguments?
+    (@arguments && @arguments.keys.any?) ? true : false
+  end
+
+  def has_user_argument?(key)
+    (@arguments && @arguments.keys.include?(key.to_s)) ? true : false
   end
 
   def primary_data

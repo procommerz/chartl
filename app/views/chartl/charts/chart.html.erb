@@ -30,12 +30,22 @@
         </div>
       </div>
 
+      <div class="panel panel-default">
+        <div class="panel-heading"><h4>Chartl Code</h4></div>
+        <div class="panel-body">
+          <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace; border: none; background: white; box-shadow: none;" readonly><%= @chart.data_code %></textarea>
+        </div>
+      </div>
+
       <div class="row">
-        <div class="col-xs-12" style="margin-top: 22px; margin-bottom: 26px;">
-          <label>Chart Code</label>
-          <div class="well">
-            <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace" readonly><%= @chart.data_code %></textarea>
-          </div>
+        <div class="col-sm-12">
+          <%= render partial: 'chart_arguments_controls' %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-12">
+          <%= render partial: 'chart_arguments_help' %>
         </div>
       </div>
     </div>

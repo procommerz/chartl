@@ -74,25 +74,6 @@
     <div class="col-xs-12 text-center">
       <h1 class="text-center"><%= @chart.name || "Unnamed Data Table" %></h1>
     </div>
-    <div class="col-xs-12">
-      <%= form_tag "/chartl/charts/#{@chart.token}", method: 'GET', class: 'filter_form' do %>
-        <input type="hidden" name="form_filtered" value="true">
-        <div class="row" style="padding: 10px">
-          <div class="col-xs-12 filters">
-            <div class="row custom_filters" style="padding: 10px"></div>
-            <div class="row" style="padding: 10px">
-              <%= select_tag(:label_filters, options_for_select(@chart.series.first['data'].first.reject{|k| k == 'id'}), class: 'form-control col-xs-8', style: 'width: auto; display: inline-block;') %>
-              <button type="button" onclick="addCustomFilter()" class="btn btn-primary add-filter">Add Filter</button>
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-xs-12">
-            <button type="submit" class="btn btn-primary submit">Search</button>
-          </div>
-        </div>
-      <% end %>
-    </div>
   </div>
 
   <div class="row">
@@ -180,9 +161,18 @@
   <div class="row">
     <div class="col-xs-12" style="margin-top: 22px; margin-bottom: 26px;">
       <label>Chart Code</label>
-      <div class="well">
-        <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace" readonly><%= @chart.data_code %></textarea>
+      <div class="panel panel-default">
+        <div class="panel-heading"><h4>Chartl Code</h4></div>
+        <div class="panel-body">
+          <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace; border: none; background: white; box-shadow: none;" readonly><%= @chart.data_code %></textarea>
+        </div>
       </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <%= render partial: 'chart_arguments_help' %>
     </div>
   </div>
 </div>
@@ -202,49 +192,6 @@
     });
   });
   <% end %>
-
-  function initFilters() {
-    var url_params = JSON.parse('<%= @chart.url_params.to_json %>'.replace(/&quot;/g, '"'));
-    for (const k in url_params) {
-      addFilter(k, url_params[k]);
-    }
-  }
-
-  function addCustomFilter() {
-    addFilter($('#label_filters').val());
-  }
-
-  function addFilter(selectFilter, value = '') {
-    var originalFilter = selectFilter;
-    selectFilter = selectFilter.replace(' ', '-').toLowerCase();
-    if (selectFilter) {
-      if (selectFilter.match(/.+_at$|.+At$/gim) || selectFilter.match(/.+_time$|.+time$/gim) || selectFilter.match(/date/gi) || selectFilter.match(/when/gi)) {
-
-        var new_filter = `<label class="label-filter range-filter filter-label-${selectFilter}">
-                            ${originalFilter}<br>
-                            From <input type="text" class="form-control range-from" placeholder="YYYY-MM-DD"  name="${originalFilter}[]" value="${value[0] || ''}"><br>
-                            To <input type="text" class="form-control range-to" placeholder="YYYY-MM-DD" name="${originalFilter}[]" value="${value[1] || ''}">
-                            <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary" type="button">X</button>
-                          </label>`;
-        $(`#label_filters option[value="${originalFilter}"]`).remove();
-        $('.custom_filters').append(new_filter);
-      } else {
-        var new_filter = `<label class="label-filter normal-filter filter-label-${selectFilter}" style="position: relative; margin-right: 40px;">
-                           ${originalFilter} <input type="text" class="form-control single-input" name="${originalFilter}" value="${value}">
-                           <button onclick="removeCustomFilter('${selectFilter}', '${originalFilter}')" class="btn btn-outline-primary remove-button" type="button">X</button>
-                        </label>`;
-        $(`#label_filters option[value="${originalFilter}"]`).remove();
-        $('.custom_filters').append(new_filter);
-      }
-    }
-  }
-
-  function removeCustomFilter(val, original) {
-    $(`.filter-label-${val}`).remove();
-    $('#label_filters').append(`<option value="${original}">${original}</option>`);
-  }
-
-  initFilters();
 </script>
 </body>
 </html>
