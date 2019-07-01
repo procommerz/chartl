@@ -56,9 +56,9 @@ module Chartl
     def load_chart_arguments
       @arg_hash = {}
 
-      @arg_hash["arg1"] = params[:arg1] if !params[:arg1].blank?
-      @arg_hash["arg2"] = params[:arg2] if !params[:arg2].blank?
-      @arg_hash["arg3"] = params[:arg3] if !params[:arg3].blank?
+      @arg_hash["arg1"] = params[:arg1] if !params[:arg1].nil?
+      @arg_hash["arg2"] = params[:arg2] if !params[:arg2].nil?
+      @arg_hash["arg3"] = params[:arg3] if !params[:arg3].nil?
 
       @arg_hash["args"] = %w(arg1 arg2 arg3).map { |k| @arg_hash[k] }.compact if @arg_hash.keys.any? # put all 'argX' args into the 'args' key in sorted order
 
