@@ -1,0 +1,93 @@
+<html>
+<head>
+  <%= javascript_include_tag('chartl/application') %>
+  <%= stylesheet_link_tag('chartl/application') %>
+  <%= stylesheet_link_tag('https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css') %>
+  <title><%= @chart.name || "Unnamed Chart" %></title>
+</head>
+
+<body class="bootstrap">
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12 text-center">
+      <h1 class="text-center"><%= @chart.name || "Unnamed Chart" %></h1>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12" style="margin-bottom: 26px;">
+      <div id="#chartArea"></div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12 col-sm-6" style="margin-bottom: 26px;">
+      <a href="" class="btn btn-default">Last refreshed at: <%= l(@chart.updated_at) %></a>
+    </div>
+    <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
+      <a href="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" class="btn btn-default" target="_blank">Download
+        CSV</a>
+      <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh
+        Data</a>
+    </div>
+  </div>
+
+  <div class="panel panel-default">
+    <div class="panel-heading"><h4>Chartl Code</h4></div>
+    <div class="panel-body">
+      <textarea class="form-control" style="width: 100%; height: 230px; font-family: monospace; border: none; background: white; box-shadow: none;" readonly><%= @chart.data_code %></textarea>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <%= render partial: 'chart_arguments_controls' %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+      <%= render partial: 'chart_arguments_help' %>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
+<%# high_chart('chartArea', @highchart) %>
+
+<script>
+  var columnOptions = {pointPadding: 0};
+
+  <% if @chart.options and (@chart.options[:column_stacking] || @chart.options['column_stacking']) %>
+  columnOptions.stacking = 'normal';
+  <% end %>
+
+  var chart = Highcharts.chart('#chartArea', {
+    chart: {
+      type: 'column',
+    },
+    title: {text: ''},
+    xAxis: <%= @chart.options['xAxis'].to_json.html_safe %>,
+    yAxis: [
+      {
+        min: 0,
+      }, {
+        min: 0,
+        opposite: true
+      }
+    ],
+    series: [
+      <% @chart.series.to_a.each do |series| %>
+      {
+        yAxis: <%= (series[:yaxis] || series['yaxis']).to_i %>,
+        type: '<%= series['type'] || series[:type] || 'spline' %>',
+        name: '<%= series['name'] || series[:name] %>',
+        data: <%= (series['data'] || series[:data] || []).to_json.to_s.html_safe %>
+      },
+      <% end %>
+    ]
+  });
+
+  Highcharts.setOptions({global: {timezone: 'Europe/Zurich'}});
+</script>

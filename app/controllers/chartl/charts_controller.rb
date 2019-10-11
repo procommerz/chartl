@@ -50,6 +50,8 @@ module Chartl
         render :table
       elsif @chart.visual_type == 'cohort'
         render :cohort
+      elsif @chart.visual_type == 'no_time_chart'
+        render :no_time_chart
       end
     end
 
