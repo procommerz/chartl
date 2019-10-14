@@ -6,6 +6,8 @@
   <%= stylesheet_link_tag('//cdn.datatables.net/1.10.18/css/jquery.dataTables.min.css') %>
   <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js') %>
   <%= javascript_include_tag('//cdn.datatables.net/1.10.18/js/dataTables.bootstrap.min.js') %>
+  <%= javascript_include_tag('//cdnjs.cloudflare.com/ajax/libs/jquery-sparklines/2.1.2/jquery.sparkline.min.js') %>
+
 
   <title><%= @chart.name || "Unnamed Data Table" %></title>
 
@@ -61,6 +63,17 @@
     .filter_form .label-filter .range-from {
       margin-left: 6px;
     }
+    .jqstooltip {
+      width: 126px !important;
+      height: 72px !important;
+    }
+    /*.rotate_boxplot {*/
+    /*  margin-top: 50px;*/
+    /*  transform: rotate(90deg);*/
+    /*}*/
+    /*.rotate_boxplot canvas{*/
+    /*  transform: rotate(90deg);*/
+    /*}*/
 
   </style>
 </head>
