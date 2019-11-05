@@ -166,6 +166,7 @@
         </select>
 
         <button type="submit" class="btn btn-default">Download CSV</button>
+        <button type="button" class="btn btn-default download-csv-client">Download Filtered CSV</button>
       </form>
     </div>
 
@@ -206,10 +207,19 @@
 
   <% if !disable_data_table %>
   $(document).ready(function () {
-    $('#data-table').DataTable({
+    const table = $('#data-table').DataTable({
       paging: false
     });
+
+    $('.download-csv-client').click(() => {
+      const csv = table.rows({ 'search': 'applied' }).data().map((k) => k.join($('#scv_separator').val() || '%2C')).join('%0A');
+      console.log(csv);
+      const ele = document.createElement('a');
+      ele.href = `data:application/octet-stream, ${csv}`;
+      ele.click();
+    })
   });
+
   <% end %>
 </script>
 </body>
