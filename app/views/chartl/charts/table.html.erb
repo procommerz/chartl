@@ -160,11 +160,15 @@
 
     <div class="col-xs-12 col-sm-3 pull-right" style="margin-bottom: 26px;">
       <form action="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" method="get" class="form-inline pull-right">
-        <select class="form-control " name="csv_separator" id="scv_separator">
+        <select class="form-control " name="csv_separator" id="csv_separator">
           <option id="semicolon" value=";">;</option>
           <option id="comma" value=",">,</option>
         </select>
 
+        <% @chart.arguments.reject { |k, v| k == 'args' || v == nil }.to_h.keys.each do |arg_key| %>
+          <% next if !@chart.has_user_argument?(arg_key) %>
+            <input hidden id="arg_<%= arg_key %>" type="text" name="<%= arg_key %>" value="<%= @chart.arguments[arg_key] %>" />
+        <% end %>
         <button type="submit" class="btn btn-default">Download CSV</button>
       </form>
     </div>
