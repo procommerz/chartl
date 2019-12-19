@@ -95,7 +95,7 @@
         labels = @chart.series.first['data'].first # TODO: custom labels support via options
         result_doc = nil
 
-        builder = Nokogiri::HTML::Builder.new do |doc|
+        builder = Nokogiri::HTML::Builder.new(:encoding => 'UTF-8') do |doc|
           doc.div(:class => "table-responsive") {
             doc.table(:border => "0", :class=> "table table-bordered", :id => "data-table") {
               if labels
