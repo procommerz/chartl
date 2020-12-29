@@ -27,8 +27,7 @@
     <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
       <a href="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" class="btn btn-default" target="_blank">Download
         CSV</a>
-      <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh
-        Data</a>
+      <button id="refresh-chart" class="btn btn-primary">Refresh Data</button>
     </div>
   </div>
 
@@ -52,42 +51,64 @@
   </div>
 </div>
 </body>
-</html>
 
 <%# high_chart('chartArea', @highchart) %>
 
-<script>
-  var columnOptions = {pointPadding: 0};
+  <script>
+    var columnOptions = {pointPadding: 0};
 
-  <% if @chart.options and (@chart.options[:column_stacking] || @chart.options['column_stacking']) %>
-  columnOptions.stacking = 'normal';
-  <% end %>
+    <% if @chart.options and (@chart.options[:column_stacking] || @chart.options['column_stacking']) %>
+    columnOptions.stacking = 'normal';
+    <% end %>
 
-  var chart = Highcharts.chart('#chartArea', {
-    chart: {
-      type: 'column',
-    },
-    title: {text: ''},
-    xAxis: <%= @chart.options['xAxis'].to_json.html_safe %>,
-    yAxis: [
-      {
-        min: 0,
-      }, {
-        min: 0,
-        opposite: true
-      }
-    ],
-    series: [
-      <% @chart.series.to_a.each do |series| %>
-      {
-        yAxis: <%= (series[:yaxis] || series['yaxis']).to_i %>,
-        type: '<%= series['type'] || series[:type] || 'spline' %>',
-        name: '<%= series['name'] || series[:name] %>',
-        data: <%= (series['data'] || series[:data] || []).to_json.to_s.html_safe %>
+    var chart = Highcharts.chart('#chartArea', {
+      chart: {
+        type: 'column',
       },
-      <% end %>
-    ]
-  });
+      title: {text: ''},
+      xAxis: <%= @chart.options['xAxis'].to_json.html_safe %>,
+      yAxis: [
+        {
+          min: 0,
+        }, {
+          min: 0,
+          opposite: true
+        }
+      ],
+      series: [
+        <% @chart.series.to_a.each do |series| %>
+        {
+          yAxis: <%= (series[:yaxis] || series['yaxis']).to_i %>,
+          type: '<%= series['type'] || series[:type] || 'spline' %>',
+          name: '<%= series['name'] || series[:name] %>',
+          data: <%= (series['data'] || series[:data] || []).to_json.to_s.html_safe %>
+        },
+        <% end %>
+      ]
+    });
 
-  Highcharts.setOptions({global: {timezone: 'Europe/Zurich'}});
-</script>
+    Highcharts.setOptions({global: {timezone: 'Europe/Zurich'}});
+  </script>
+  <script>
+      let checkInterval = setInterval(checkRefreshing, 2000);
+
+      $('#refresh-chart').click(() => {
+          $('#refresh-chart').prop('disabled', true);
+          clearInterval(checkInterval);
+          $.get("<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>").then((response) => {
+              setTimeout(() => {
+                  checkInterval = setInterval(checkRefreshing, 2000);
+              }, 5000);
+          });
+      });
+
+      function checkRefreshing() {
+          $.get("<%= Chartl::Engine.routes.url_helpers.refreshing_chartl_chart_path(id: @chart.token) %>").then((response) => {
+              $('#refresh-chart').prop('disabled', response.refreshing);
+              if (response.refreshing) {
+                  clearInterval(checkInterval);
+              }
+          });
+      }
+  </script>
+</html>

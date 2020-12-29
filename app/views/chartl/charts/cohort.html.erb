@@ -67,7 +67,7 @@
           <a href="" class="btn btn-default">Last refreshed at: <%= l(@chart.updated_at) %></a>
         </div>
         <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
-          <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh Data</a>
+          <button id="refresh-chart" class="btn btn-primary">Refresh Data</button>
         </div>
       </div>
 
@@ -81,4 +81,27 @@
       </div>
     </div>
   </body>
+
+  <script>
+      let checkInterval = setInterval(checkRefreshing, 2000);
+
+      $('#refresh-chart').click(() => {
+          $('#refresh-chart').prop('disabled', true);
+          clearInterval(checkInterval);
+          $.get("<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>").then((response) => {
+              setTimeout(() => {
+                  checkInterval = setInterval(checkRefreshing, 2000);
+              }, 5000);
+          });
+      });
+
+      function checkRefreshing() {
+          $.get("<%= Chartl::Engine.routes.url_helpers.refreshing_chartl_chart_path(id: @chart.token) %>").then((response) => {
+              $('#refresh-chart').prop('disabled', response.refreshing);
+              if (response.refreshing) {
+                  clearInterval(checkInterval);
+              }
+          });
+      }
+  </script>
 </html>

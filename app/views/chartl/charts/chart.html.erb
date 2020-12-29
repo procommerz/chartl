@@ -1,4 +1,4 @@
-<html>
+<26html>
   <head>
     <%= javascript_include_tag('chartl/application') %>
     <%= stylesheet_link_tag('chartl/application') %>
@@ -26,7 +26,7 @@
         </div>
         <div class="col-xs-12 col-sm-6 text-right" style="margin-bottom: 26px;">
           <a href="<%= Chartl::Engine.routes.url_helpers.chartl_chart_path(id: @chart.token, format: :csv) %>" class="btn btn-default" target="_blank">Download CSV</a>
-          <a href="<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>" class="btn btn-primary">Refresh Data</a>
+          <button id="refresh-chart" class="btn btn-primary">Refresh Data</button>
         </div>
       </div>
 
@@ -50,72 +50,95 @@
       </div>
     </div>
   </body>
-</html>
 
 <%# high_chart('chartArea', @highchart) %>
 
-<script>
-  var columnOptions = {pointPadding: 0};
+  <script>
+    var columnOptions = {pointPadding: 0};
 
-  <% if @chart.options and (@chart.options[:column_stacking] || @chart.options['column_stacking']) %>
-    columnOptions.stacking = 'normal';
-  <% end %>
+    <% if @chart.options and (@chart.options[:column_stacking] || @chart.options['column_stacking']) %>
+      columnOptions.stacking = 'normal';
+    <% end %>
 
-  var chart = Highcharts.stockChart('#chartArea', {
-    chart: {
-      type: 'column',
-      zoomType: 'x',
-      height: <%= !params[:height].blank? ? "'#{params[:height]}'".html_safe : "'auto'".html_safe %>
-    },
-    rangeSelector: {
-      selected: 1,
-      buttons: [{ type: 'day', count: 1, text: '1D' }, { type: 'all', count: 1, text: 'All' }],
-      labelStyle: { fontSize: '11px' },
-      inputStyle: { fontSize: '11px', padding: '2px' },
-      inputBoxStyle: { fontSize: '11px', padding: '2px' }
-    },
-    time: {
-      timezone: 'Europe/Zurich'
-    },
-    title: { text: '' },
-    xAxis: { type: 'datetime' },
-    yAxis: [{
-      gridLineWidth: 0,
-      minorGridLineWidth: 0,
-      min: 0,
-      title: {
-        text: ''
-      }
-    }, {
-      gridLineWidth: 0,
-      minorGridLineWidth: 0,
-      opposite: false,
-      title: false
-    }],
-    tooltip: {
-      pointFormat: '{series.name}: <b>{point.y}</b>',
-      shared: true
-    },
-    legend: {
-      enabled: true,
-      align: 'center',
-      // x: -30,
-      verticalAlign: 'top',
-      y: 25,
-      floating: false,
-      backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
-      shadow: false
-    },
-    plotOptions: {
-      column: columnOptions
-    },
-    series: [
-      <% utc_offset = Time.now.utc_offset %>
-      <% @chart.series.to_a.each do |series| %>
-        { yAxis: <%= (series[:yaxis] || series['yaxis']).to_i %>, type: '<%= series['type'] || series[:type] || 'spline' %>', name: '<%= series['name'] || series[:name] %>', data: <%= (series['data'] || series[:data] || []).map { |r| r[0].is_a?(String) ? r[0] = (Time.parse(r[0]).to_i + utc_offset) * 1000 : nil; r }.to_json %>  },
-      <% end %>
-    ]
-  });
+    var chart = Highcharts.stockChart('#chartArea', {
+      chart: {
+        type: 'column',
+        zoomType: 'x',
+        height: <%= !params[:height].blank? ? "'#{params[:height]}'".html_safe : "'auto'".html_safe %>
+      },
+      rangeSelector: {
+        selected: 1,
+        buttons: [{ type: 'day', count: 1, text: '1D' }, { type: 'all', count: 1, text: 'All' }],
+        labelStyle: { fontSize: '11px' },
+        inputStyle: { fontSize: '11px', padding: '2px' },
+        inputBoxStyle: { fontSize: '11px', padding: '2px' }
+      },
+      time: {
+        timezone: 'Europe/Zurich'
+      },
+      title: { text: '' },
+      xAxis: { type: 'datetime' },
+      yAxis: [{
+        gridLineWidth: 0,
+        minorGridLineWidth: 0,
+        min: 0,
+        title: {
+          text: ''
+        }
+      }, {
+        gridLineWidth: 0,
+        minorGridLineWidth: 0,
+        opposite: false,
+        title: false
+      }],
+      tooltip: {
+        pointFormat: '{series.name}: <b>{point.y}</b>',
+        shared: true
+      },
+      legend: {
+        enabled: true,
+        align: 'center',
+        // x: -30,
+        verticalAlign: 'top',
+        y: 25,
+        floating: false,
+        backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
+        shadow: false
+      },
+      plotOptions: {
+        column: columnOptions
+      },
+      series: [
+        <% utc_offset = Time.now.utc_offset %>
+        <% @chart.series.to_a.each do |series| %>
+          { yAxis: <%= (series[:yaxis] || series['yaxis']).to_i %>, type: '<%= series['type'] || series[:type] || 'spline' %>', name: '<%= series['name'] || series[:name] %>', data: <%= (series['data'] || series[:data] || []).map { |r| r[0].is_a?(String) ? r[0] = (Time.parse(r[0]).to_i + utc_offset) * 1000 : nil; r }.to_json %>  },
+        <% end %>
+      ]
+    });
 
-  Highcharts.setOptions({ global: { timezone: 'Europe/Zurich' }});
-</script>
+    Highcharts.setOptions({ global: { timezone: 'Europe/Zurich' }});
+  </script>
+
+  <script>
+    let checkInterval = setInterval(checkRefreshing, 2000);
+
+    $('#refresh-chart').click(() => {
+        $('#refresh-chart').prop('disabled', true);
+        clearInterval(checkInterval);
+        $.get("<%= Chartl::Engine.routes.url_helpers.refresh_chartl_chart_path(id: @chart.token) %>").then((response) => {
+            setTimeout(() => {
+                checkInterval = setInterval(checkRefreshing, 2000);
+            }, 5000);
+        });
+    });
+
+    function checkRefreshing() {
+        $.get("<%= Chartl::Engine.routes.url_helpers.refreshing_chartl_chart_path(id: @chart.token) %>").then((response) => {
+            $('#refresh-chart').prop('disabled', response.refreshing);
+            if (response.refreshing) {
+                clearInterval(checkInterval);
+            }
+        });
+    }
+  </script>
+</html>
