@@ -22,11 +22,19 @@ module Chartl
 
     # [GET]
     def refresh
-      load_chart
+      if !is_already_processing?
+        load_chart
+        RefreshWorker.perform_async(@chart.token)
+      end
+      render json: {success: true}
+    end
 
-      @chart.refresh_data
-
-      render_show
+    def refreshing
+      rtn = {refreshing: false}
+      if is_already_processing?
+        rtn[:refreshing] = true
+      end
+      render json: rtn
     end
 
     # POST
@@ -75,6 +83,16 @@ module Chartl
 
     def custom_arguments_present?
       @arg_hash.keys.any?
+    end
+
+    def is_already_processing?
+
+      ss = Sidekiq::ScheduledSet.new
+      rs = Sidekiq::RetrySet.new
+      qs = Sidekiq::Queue.new('chartl')
+      [ss, rs, qs].any? do |s|
+        Sidekiq::Workers.new.map {|j| s.find_job(j)}.size > 0
+      end
     end
 
     # def chartl_arguments

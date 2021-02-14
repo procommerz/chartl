@@ -3,6 +3,7 @@ Chartl::Engine.routes.draw do
     resources :charts, only: [:show, :update] do
       member do
         get :refresh
+        get :refreshing
       end
     end
   end
